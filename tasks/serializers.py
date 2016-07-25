@@ -4,4 +4,5 @@ from tasks.models import TaskModel
 
 
 class TaskSerializer(serializers.HyperlinkedModelSerializer):
-    model = TaskModel
+    class Meta:
+        model = TaskModel

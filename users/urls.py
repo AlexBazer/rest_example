@@ -2,12 +2,11 @@ from django.conf.urls import url, include
 
 from rest_framework import routers
 
-from tasks.views import TaskSet
+from users.views import UserViewset
 
 router = routers.DefaultRouter()
-
-router.register(r'tasks', TaskSet)
+router.register('users', UserViewset)
 
 urlpatterns = [
-    url(r'^', include(router.urls)),
+    url(r'^', include(router.urls))
 ]
