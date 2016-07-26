@@ -3,7 +3,7 @@ from tasks.serializers import TaskSerializer
 from tasks.models import TaskModel
 
 
-class TaskSet(viewsets.ModelViewSet):
+class TaskViewset(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, )
 
     serializer_class = TaskSerializer
