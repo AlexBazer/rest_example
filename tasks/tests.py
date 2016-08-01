@@ -2,7 +2,7 @@ from rest_framework import test, status
 from django.core.urlresolvers import reverse
 from django.contrib.auth import get_user_model
 from .models import TaskModel
-from .factories import TaskFactory
+from .factories import ParentSingleTaskFactory
 
 User = get_user_model()
 
@@ -19,8 +19,10 @@ class TaskCreateUpdateTestCase(test.APITestCase):
         )
 
     def test_task_create_with_nested(self):
+        """ Create new note with nested tasks as children """
+        parent_title = "Prent task for test_task_create_with_nested"
         response = self.client.post(reverse('taskmodel-list'), {
-            'title': 'Test 1',
+            'title': parent_title,
             'description': 'Test description',
             'sub_tasks': [
                 {
@@ -34,11 +36,10 @@ class TaskCreateUpdateTestCase(test.APITestCase):
             ]
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        created = TaskModel.objects.all()
-        self.assertEqual(created.count(), 3)
-        parents = created.filter(parent__isnull=True)
-        self.assertEqual(parents.count(), 1)
-        self.assertEqual(parents.first().sub_tasks.all().count(), 2)
+        created_parent = TaskModel.objects.get(title=parent_title)
+        created_children = created_parent.sub_tasks.all()
+        self.assertEqual(created_children.count(), 2)
 
     def test_task_update_with_nested(self):
+        """ Update parent task fields """
         pass
