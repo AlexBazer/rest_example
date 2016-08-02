@@ -63,11 +63,9 @@ class TaskCreateUpdateTestCase(test.APITestCase):
             'description': self.parent_task.description
         }
         new_parent_task['sub_tasks'] = new_children_tasks
-        response = self.client.put(
-            reverse('taskmodel-detail', kwargs={'pk': self.parent_task.id}),
-            new_parent_task,
-            format='json'
-        )
+
+        response = self.request_taskmodel_detail(self.parent_task.id, new_parent_task)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Get object from db
@@ -83,3 +81,44 @@ class TaskCreateUpdateTestCase(test.APITestCase):
             self.assertEqual(item[1].title, item[0]['title'])
             for item in zip(new_children_tasks, children_tasks)
         ]
+
+    def test_task_update_only_one_subtask_create_subtask(self):
+        """ Update only one sub task, create new subtask(subtask wihout ID was send)
+
+        and remove subtasks that was not in request"""
+        updated_sub_task = {
+            'id': self.children_tasks[0].id,
+            'title': fuzzy.FuzzyText().fuzz(),
+            'description': self.children_tasks[0].description
+        }
+        new_subtask = {
+            'title': fuzzy.FuzzyText().fuzz(),
+            'description': fuzzy.FuzzyText().fuzz()
+        }
+        new_parent_task = {
+            'title': fuzzy.FuzzyText().fuzz(),
+            'description': self.parent_task.description,
+            'sub_tasks': [
+                updated_sub_task,
+                new_subtask
+            ]
+        }
+        response = self.request_taskmodel_detail(self.parent_task.id, new_parent_task)
+
+        self.assertEqual(response.status_code, 200)
+
+        # New subtask was created
+        new_subtask = TaskModel.objects.get(title=new_subtask['title'])
+        self.assertEqual(new_subtask.parent.pk, self.parent_task.pk)
+
+        # Subtasks that wasn't in request are deleted
+        self.assertFalse(
+            TaskModel.objects.filter(pk__in=[item.pk for item in self.children_tasks if item.pk != updated_sub_task['id']])
+        )
+
+    def request_taskmodel_detail(self, pk, task):
+        return self.client.put(
+            reverse('taskmodel-detail', kwargs={'pk': pk}),
+            task,
+            format='json'
+        )
